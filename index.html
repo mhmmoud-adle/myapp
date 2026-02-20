@@ -8,140 +8,150 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --border: rgba(255,255,255,0.1); }
-        body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; transition: 0.3s; }
         .glass { background: var(--card); border: 1px solid var(--border); }
         #adminPanel, #loginModal { display: none; }
-        input, select { background: rgba(0,0,0,0.5) !important; color: white !important; border: 1px solid #334155 !important; padding: 12px; border-radius: 8px; }
-        .btn-blue { background: #2563eb; color: white; font-weight: bold; padding: 12px; border-radius: 8px; }
+        input, select { background: rgba(0,0,0,0.3) !important; color: white !important; border: 1px solid #334155 !important; }
     </style>
 </head>
-<body>
+<body class="min-h-screen pb-10">
 
-    <nav class="glass p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-xl font-bold text-blue-500">الخط الرفيع</h1>
+    <nav class="glass sticky top-0 z-[60] p-4 flex justify-between items-center">
+        <h1 class="text-xl font-black text-blue-500">الخط الرفيع</h1>
         <button onclick="document.getElementById('loginModal').style.display='flex'" class="opacity-20"><i class="fa-solid fa-user-shield"></i></button>
     </nav>
 
-    <div id="loginModal" class="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4">
-        <div class="glass p-6 rounded-xl w-full max-w-sm">
-            <input type="password" id="adminPass" class="w-full mb-4 text-center" placeholder="Password">
-            <button onclick="login()" class="btn-blue w-full">Login</button>
+    <main class="max-w-7xl mx-auto p-4 md:p-6">
+        <div id="loginModal" class="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4">
+            <div class="glass w-full max-w-sm p-8 rounded-2xl">
+                <input type="password" id="adminPassInput" class="w-full p-4 mb-4 rounded-xl text-center" placeholder="Password">
+                <button onclick="handleLogin()" class="w-full bg-blue-600 p-4 rounded-xl font-bold">Login</button>
+                <button onclick="document.getElementById('loginModal').style.display='none'" class="w-full mt-4 text-xs opacity-50">إلغاء</button>
+            </div>
         </div>
-    </div>
 
-    <main class="p-4 max-w-4xl mx-auto">
-        <div id="adminPanel" class="glass p-6 rounded-xl mb-10 border-blue-500/50">
-            <h2 class="mb-4 font-bold">Admin Panel</h2>
+        <div id="adminPanel" class="glass rounded-2xl p-6 mb-10 border-blue-500/50">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="font-black text-blue-400">لوحة التحكم</h2>
+                <button onclick="location.reload()" class="bg-red-500 text-white px-3 py-1 rounded text-xs">خروج</button>
+            </div>
             <div class="space-y-6">
-                <div class="flex gap-2">
-                    <input type="text" id="newCat" class="flex-grow" placeholder="New Category">
-                    <button onclick="addCat()" class="btn-blue">Add</button>
+                <div>
+                    <label class="text-xs opacity-50">إضافة قسم</label>
+                    <div class="flex gap-2 mt-1">
+                        <input type="text" id="catInput" class="flex-grow p-3 rounded-lg outline-none">
+                        <button onclick="addCategory()" class="bg-blue-600 px-6 rounded-lg font-bold">إضافة</button>
+                    </div>
                 </div>
-                <div class="border-t border-white/10 pt-4">
-                    <select id="catSelect" class="w-full mb-2"></select>
-                    <input type="text" id="pName" placeholder="Product Name" class="w-full mb-2">
-                    <input type="number" id="pPrice" placeholder="Price" class="w-full mb-2">
-                    <input type="file" id="pImg" class="w-full text-xs mb-4">
-                    <button onclick="addProd()" class="btn-blue w-full bg-green-600">Publish</button>
+                <div class="pt-4 border-t border-white/5">
+                    <label class="text-xs opacity-50">إضافة منتج</label>
+                    <select id="catSelect" class="w-full p-3 rounded-lg mt-1 mb-3"></select>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <input type="text" id="pName" placeholder="الاسم" class="p-3 rounded-lg">
+                        <input type="number" id="pPrice" placeholder="السعر" class="p-3 rounded-lg">
+                    </div>
+                    <input type="file" id="pImg" accept="image/*" class="w-full text-xs mb-4">
+                    <button onclick="saveProduct()" class="w-full bg-green-600 p-4 rounded-xl font-bold">نشر المنتج</button>
                 </div>
             </div>
         </div>
 
-        <div id="store" class="space-y-10"></div>
+        <div id="storeContainer" class="space-y-12"></div>
     </main>
 
     <script>
-        const API = "https://fine-line-9c84d-default-rtdb.firebaseio.com/storeData";
-        let categories = [];
-        let products = {};
+        // CRITICAL FIX: Regional URL for Europe
+        const BASE_URL = "https://fine-line-9c84d-default-rtdb.europe-west1.firebasedatabase.app/storeData";
+        
+        window.appData = { categories: {}, products: {} };
 
-        async function sync() {
+        async function loadStore() {
             try {
-                const res = await fetch(`${API}.json`);
+                const res = await fetch(`${BASE_URL}.json`);
                 const data = await res.json();
-                
-                // Fixed: Handling empty database safely
-                categories = data && data.categories ? Object.values(data.categories) : [];
-                products = data && data.products ? data.products : {};
-                
-                render();
-            } catch (e) {
-                console.error("Sync Error", e);
-            }
+                if(data) {
+                    window.appData.categories = data.categories || {};
+                    window.appData.products = data.products || {};
+                }
+                renderStore();
+            } catch (e) { console.error("Sync Error:", e); }
         }
 
-        async function addCat() {
-            const val = document.getElementById('newCat').value.trim();
+        async function addCategory() {
+            const val = document.getElementById('catInput').value.trim();
             if(!val) return;
-            await fetch(`${API}/categories.json`, { method: 'POST', body: JSON.stringify(val) });
-            document.getElementById('newCat').value = '';
-            sync();
+            await fetch(`${BASE_URL}/categories.json`, { 
+                method: 'POST', 
+                body: JSON.stringify(val) 
+            });
+            document.getElementById('catInput').value = '';
+            loadStore();
         }
 
-        async function addProd() {
-            const name = document.getElementById('pName').value;
-            const price = document.getElementById('pPrice').value;
-            const cat = document.getElementById('catSelect').value;
-            const file = document.getElementById('pImg').files[0];
+        async function saveProduct() {
+            const n = document.getElementById('pName').value, 
+                  p = document.getElementById('pPrice').value, 
+                  c = document.getElementById('catSelect').value, 
+                  f = document.getElementById('pImg').files[0];
+            
+            if(!n || !p || !c) return alert("Fill all fields");
 
-            if(!name || !price || !cat) return alert("Fill all fields");
-
-            let img = "https://via.placeholder.com/150";
-            if(file) {
+            let img = "https://via.placeholder.com/400";
+            if(f) {
                 const reader = new FileReader();
-                img = await new Promise(r => { reader.onload = e => r(e.target.result); reader.readAsDataURL(file); });
+                img = await new Promise(res => { 
+                    reader.onload = e => res(e.target.result); 
+                    reader.readAsDataURL(f); 
+                });
             }
 
-            await fetch(`${API}/products.json`, {
+            await fetch(`${BASE_URL}/products.json`, {
                 method: 'POST',
-                body: JSON.stringify({ name, price, category: cat, img })
+                body: JSON.stringify({ name: n, price: p, category: c, img })
             });
-            sync();
+            
+            document.getElementById('pName').value = '';
+            document.getElementById('pPrice').value = '';
+            loadStore();
         }
 
-        function render() {
+        function renderStore() {
             const isAdmin = document.getElementById('adminPanel').style.display === 'block';
-            
-            // Fill Dropdown
-            document.getElementById('catSelect').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            const catArr = Object.values(window.appData.categories);
+            const prodArr = Object.entries(window.appData.products);
 
-            // Fill Store
-            const storeHTML = categories.map(cat => {
-                const ps = Object.entries(products).filter(([id, p]) => p.category === cat);
-                return `
-                    <section>
-                        <h2 class="text-blue-500 font-bold mb-4 border-l-4 border-blue-500 pl-2">${cat}</h2>
-                        <div class="grid grid-cols-2 gap-4">
-                            ${ps.map(([id, p]) => `
-                                <div class="glass p-3 rounded-xl relative">
-                                    <img src="${p.img}" class="w-full aspect-square object-cover rounded-lg mb-2">
-                                    <div class="text-sm font-bold">${p.name}</div>
-                                    <div class="text-blue-400">$${p.price}</div>
-                                    ${isAdmin ? `<button onclick="delProd('${id}')" class="absolute top-2 right-2 bg-red-600 w-6 h-6 rounded-full">×</button>` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </section>
-                `;
-            }).join('');
+            document.getElementById('catSelect').innerHTML = catArr.map(c => `<option value="${c}">${c}</option>`).join('');
             
-            document.getElementById('store').innerHTML = storeHTML || '<p class="opacity-30 text-center">No data yet.</p>';
+            document.getElementById('storeContainer').innerHTML = catArr.map(cat => {
+                const ps = prodArr.filter(([id, p]) => p.category === cat);
+                return `<section>
+                    <h2 class="text-xl font-bold border-l-4 border-blue-600 pl-3 mb-6">${cat}</h2>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">${ps.map(([id, p]) => `
+                        <div class="glass p-3 rounded-2xl relative">
+                            <img src="${p.img}" class="w-full aspect-square object-cover rounded-xl mb-3">
+                            <h4 class="font-bold text-xs truncate">${p.name}</h4>
+                            <p class="text-blue-500 font-black">$${p.price}</p>
+                            ${isAdmin ? `<button onclick="delProd('${id}')" class="absolute top-2 right-2 bg-red-600 text-white w-6 h-6 rounded-full text-xs">×</button>` : ''}
+                        </div>`).join('')}</div></section>`;
+            }).join('');
         }
 
         async function delProd(id) {
-            await fetch(`${API}/products/${id}.json`, { method: 'DELETE' });
-            sync();
-        }
-
-        function login() {
-            if(document.getElementById('adminPass').value === '1234') {
-                document.getElementById('adminPanel').style.display = 'block';
-                document.getElementById('loginModal').style.display = 'none';
-                render();
+            if(confirm("حذف؟")) {
+                await fetch(`${BASE_URL}/products/${id}.json`, { method: 'DELETE' });
+                loadStore();
             }
         }
 
-        sync();
+        window.handleLogin = () => {
+            if(document.getElementById('adminPassInput').value === '1234') {
+                document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('loginModal').style.display = 'none';
+                renderStore();
+            }
+        };
+
+        loadStore();
     </script>
 </body>
 </html>
