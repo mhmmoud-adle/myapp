@@ -1,0 +1,225 @@
+ر<!DOCTYPE html>
+<html lang="en" id="htmlTag">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AD-PRO Agency | Professional Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --border: rgba(255,255,255,0.1); }
+        .light { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --border: rgba(0,0,0,0.1); }
+        body { background: var(--bg); color: var(--text); transition: 0.3s; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .glass { background: var(--card); border: 1px solid var(--border); backdrop-filter: blur(10px); }
+        #adminPanel, #checkoutModal { display: none; }
+        [dir="rtl"] { text-align: right; }
+        input, select, textarea { color: #fff !important; background: rgba(0,0,0,0.2) !important; }
+        .light input, .light select, .light textarea { color: #000 !important; background: rgba(0,0,0,0.05) !important; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <nav class="glass sticky top-0 z-50 p-4 shadow-xl">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-black text-blue-500 tracking-tighter">AD-PRO</h1>
+            <div class="flex items-center gap-5">
+                <button onclick="toggleTheme()" class="text-xl"><i class="fa-solid fa-circle-half-stroke"></i></button>
+                <button onclick="toggleLang()" id="langBtn" class="font-bold border-2 border-blue-500 px-3 py-1 rounded-lg text-sm transition hover:bg-blue-500 hover:text-white">العربية</button>
+                <div class="relative cursor-pointer" onclick="toggleCart()">
+                    <i class="fa-solid fa-cart-shopping text-2xl text-blue-500"></i>
+                    <span id="cartCount" class="absolute -top-2 -right-2 bg-red-600 text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black text-white">0</span>
+                </div>
+                <button onclick="accessAdmin()" class="opacity-20 hover:opacity-100"><i class="fa-solid fa-user-shield"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6">
+        
+        <div class="mb-10 flex justify-center">
+            <div class="relative w-full max-w-xl">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 opacity-30"></i>
+                <input type="text" id="searchInput" onkeyup="renderStore()" class="w-full p-4 pl-12 rounded-2xl border border-slate-700 outline-none focus:border-blue-500" placeholder="Search products...">
+            </div>
+        </div>
+
+        <div id="adminPanel" class="glass rounded-[2rem] p-8 mb-12 border-2 border-blue-500/50 shadow-2xl">
+            <div class="flex justify-between items-center mb-8">
+                <h2 id="t-adminTitle" class="text-2xl font-black text-blue-400 uppercase">Dashboard</h2>
+                <button onclick="signOut()" id="t-adminExit" class="bg-red-500 text-white px-6 py-2 rounded-xl font-bold text-xs uppercase">Exit</button>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-10">
+                <div class="space-y-5">
+                    <p id="t-step1" class="text-xs font-black opacity-40 uppercase tracking-widest">1. Categories</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="catInput" class="flex-grow p-4 rounded-2xl border border-slate-700 outline-none">
+                        <button onclick="addCategory()" id="t-addCatBtn" class="bg-blue-600 px-8 rounded-2xl font-black">ADD</button>
+                    </div>
+                    <div id="adminCatList" class="flex flex-wrap gap-2 pt-2"></div>
+                </div>
+
+                <div class="space-y-4">
+                    <p id="t-step2" class="text-xs font-black opacity-40 uppercase tracking-widest">2. Products</p>
+                    <select id="catSelect" class="w-full p-4 rounded-2xl border border-slate-700"></select>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="pName" class="p-4 rounded-2xl border border-slate-700">
+                        <input type="number" id="pPrice" class="p-4 rounded-2xl border border-slate-700">
+                    </div>
+                    <input type="file" id="pImg" accept="image/*" class="w-full text-sm">
+                    <button onclick="saveProduct()" id="t-saveProdBtn" class="w-full bg-green-600 p-4 rounded-2xl font-black text-lg">PUBLISH</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="storeContainer" class="space-y-20"></div>
+    </main>
+
+    <div id="checkoutModal" class="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
+        <div class="glass w-full max-w-xl p-10 rounded-[3rem] shadow-2xl border-blue-500/40">
+            <h2 id="t-checkoutHeader" class="text-4xl font-black mb-2 text-blue-500 italic">ORDER INFO</h2>
+            <form onsubmit="finalizeOrder(event)" class="space-y-5">
+                <input type="text" id="custName" required class="w-full p-5 rounded-2xl border border-slate-700 outline-none">
+                <input type="tel" id="custPhone" required class="w-full p-5 rounded-2xl border border-slate-700 outline-none">
+                <select id="payMethod" class="w-full p-5 rounded-2xl border border-slate-700">
+                    <option value="Cash" id="t-optCash">Cash</option>
+                    <option value="Bank" id="t-optBank">Bank Transfer</option>
+                </select>
+                <button type="submit" id="t-confirmBtn" class="w-full bg-blue-600 p-5 rounded-2xl font-black text-xl shadow-lg">CONFIRM</button>
+                <button type="button" onclick="closeCheckout()" id="t-backBtn" class="w-full text-xs opacity-50 mt-4 underline">Back</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="cartSidebar" class="fixed right-0 top-0 h-full w-full md:w-[450px] glass z-[60] p-10 translate-x-full transition-transform duration-500 shadow-2xl">
+        <h2 id="t-cartTitle" class="font-black text-3xl italic uppercase mb-10 text-blue-500">Cart</h2>
+        <div id="cartItems" class="space-y-6 max-h-[60vh] overflow-y-auto pr-4"></div>
+        <div class="absolute bottom-0 left-0 w-full p-10 bg-black/40 border-t border-white/5">
+            <div class="flex justify-between mb-8 font-black text-3xl">
+                <span id="t-totalText">Total</span><span id="cartTotal" class="text-blue-500">$0</span>
+            </div>
+            <button onclick="openCheckout()" id="t-proceedBtn" class="w-full bg-blue-600 p-6 rounded-[2rem] font-black text-xl shadow-2xl">PROCEED</button>
+        </div>
+    </div>
+
+    <script>
+        let appData = JSON.parse(localStorage.getItem('AD_PRO_V18')) || { categories: [], products: [] };
+        let cart = [];
+        let lang = localStorage.getItem('AD_LANG') || 'en';
+        let theme = localStorage.getItem('AD_THEME') || 'dark';
+
+        const dict = {
+            en: {
+                lang: "العربية", adminTitle: "Agency Dashboard", adminExit: "Exit", step1: "1. Categories",
+                step2: "2. Products", addCatBtn: "ADD", saveProdBtn: "PUBLISH", checkoutHeader: "ORDER INFO",
+                optCash: "Cash", optBank: "Bank Transfer", confirmBtn: "SEND TO WHATSAPP", backBtn: "Back",
+                cartTitle: "My Cart", totalText: "Total", proceedBtn: "PROCEED", addBtn: "Add to Order",
+                success: "Published!", searchPl: "Search products...", catPl: "Category Name...", 
+                pNamePl: "Product Name", pPricePl: "Price ($)", custNamePl: "Full Name", 
+                custPhonePl: "Phone Number", waPrefix: "New Order From AD-PRO:"
+            },
+            ar: {
+                lang: "English", adminTitle: "لوحة التحكم", adminExit: "خروج", step1: "1. الأقسام",
+                step2: "2. المنتجات", addCatBtn: "إضافة", saveProdBtn: "نشر", checkoutHeader: "بيانات الطلب",
+                optCash: "كاش", optBank: "تحويل مصرفي", confirmBtn: "إرسال عبر واتساب", backBtn: "رجوع",
+                cartTitle: "السلة", totalText: "المجموع", proceedBtn: "متابعة", addBtn: "طلب",
+                success: "تم النشر!", searchPl: "بحث عن منتج...", catPl: "اسم القسم...", 
+                pNamePl: "اسم المنتج", pPricePl: "السعر", custNamePl: "الاسم بالكامل", 
+                custPhonePl: "رقم الهاتف", waPrefix: "طلب جديد من AD-PRO:"
+            }
+        };
+
+        function toggleLang() { lang = lang === 'en' ? 'ar' : 'en'; localStorage.setItem('AD_LANG', lang); applyAll(); }
+        function toggleTheme() { theme = theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('AD_THEME', theme); applyAll(); }
+
+        function applyAll() {
+            const t = dict[lang];
+            document.getElementById('htmlTag').dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('langBtn').innerText = t.lang;
+            document.getElementById('t-adminTitle').innerText = t.adminTitle;
+            document.getElementById('t-adminExit').innerText = t.adminExit;
+            document.getElementById('t-step1').innerText = t.step1;
+            document.getElementById('t-step2').innerText = t.step2;
+            document.getElementById('t-addCatBtn').innerText = t.addCatBtn;
+            document.getElementById('t-saveProdBtn').innerText = t.saveProdBtn;
+            document.getElementById('t-checkoutHeader').innerText = t.checkoutHeader;
+            document.getElementById('t-optCash').innerText = t.optCash;
+            document.getElementById('t-optBank').innerText = t.optBank;
+            document.getElementById('t-confirmBtn').innerText = t.confirmBtn;
+            document.getElementById('t-backBtn').innerText = t.backBtn;
+            document.getElementById('t-cartTitle').innerText = t.cartTitle;
+            document.getElementById('t-totalText').innerText = t.totalText;
+            document.getElementById('t-proceedBtn').innerText = t.proceedBtn;
+            document.getElementById('searchInput').placeholder = t.searchPl;
+            document.getElementById('catInput').placeholder = t.catPl;
+            document.getElementById('pName').placeholder = t.pNamePl;
+            document.getElementById('pPrice').placeholder = t.pPricePl;
+            document.getElementById('custName').placeholder = t.custNamePl;
+            document.getElementById('custPhone').placeholder = t.custPhonePl;
+            document.body.className = theme === 'light' ? 'light min-h-screen' : 'min-h-screen';
+            renderStore();
+        }
+
+        // SYSTEM LOGIC
+        function accessAdmin() { if(prompt("Pass:") === "1234") { document.getElementById('adminPanel').style.display = 'block'; renderStore(); } }
+        function signOut() { document.getElementById('adminPanel').style.display = 'none'; renderStore(); }
+        function addCategory() { const v = document.getElementById('catInput').value.trim(); if(v) { appData.categories.push(v); save(); renderStore(); document.getElementById('catInput').value = ''; } }
+        
+        async function saveProduct() {
+            const n = document.getElementById('pName').value, p = document.getElementById('pPrice').value, c = document.getElementById('catSelect').value, f = document.getElementById('pImg').files[0];
+            if(!n || !p || !c) return;
+            let img = "https://via.placeholder.com/400";
+            if(f) { img = await new Promise(res => { const r = new FileReader(); r.readAsDataURL(f); r.onload = e => { const i = new Image(); i.src = e.target.result; i.onload = () => { const cv = document.createElement('canvas'); cv.width = 400; cv.height = 400; cv.getContext('2d').drawImage(i, 0, 0, 400, 400); res(cv.toDataURL('image/jpeg', 0.7)); } } }); }
+            appData.products.push({ id: Date.now(), name: n, price: p, category: c, img });
+            save(); renderStore(); alert(dict[lang].success);
+        }
+
+        function renderStore() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const isAdmin = document.getElementById('adminPanel').style.display === 'block';
+            
+            document.getElementById('catSelect').innerHTML = appData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('adminCatList').innerHTML = appData.categories.map((c, i) => `<span class="bg-blue-600/20 text-[10px] p-2 rounded-xl border border-blue-500/40">${c} <button onclick="delCat(${i})" class="text-red-500 ml-2">×</button></span>`).join('');
+
+            const cont = document.getElementById('storeContainer');
+            cont.innerHTML = appData.categories.map(cat => {
+                const ps = appData.products.filter(p => p.category === cat && p.name.toLowerCase().includes(query));
+                if(ps.length === 0) return "";
+                return `<section><h2 class="text-3xl font-black mb-8 border-l-8 border-blue-600 pl-5 uppercase italic opacity-90">${cat}</h2><div class="grid grid-cols-2 lg:grid-cols-4 gap-8">${ps.map(p => `<div class="glass p-5 rounded-[2.5rem] relative border border-white/5"><img src="${p.img}" class="w-full h-48 object-cover rounded-[1.8rem] mb-5"><h4 class="font-bold text-sm mb-1">${p.name}</h4><p class="text-blue-500 font-black text-2xl mb-5">$${p.price}</p><button onclick="addToCart(${p.id})" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl text-xs uppercase hover:bg-blue-500 transition">${dict[lang].addBtn}</button>${isAdmin ? `<button onclick="delProd(${p.id})" class="absolute top-4 right-4 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center">×</button>` : ''}</div>`).join('')}</div></section>`;
+            }).join('');
+        }
+
+        function addToCart(id) { const p = appData.products.find(x => x.id === id); const ex = cart.find(i => i.id === id); if(ex) ex.qty++; else cart.push({...p, qty: 1}); updateCart(); if(window.innerWidth > 768) toggleCart(); }
+        function updateCart() {
+            document.getElementById('cartCount').innerText = cart.reduce((s, i) => s + i.qty, 0);
+            document.getElementById('cartItems').innerHTML = cart.map((it, i) => `<div class="flex justify-between items-center bg-black/20 p-5 rounded-[2rem] border border-white/5">
+                <div class="flex items-center gap-4"><img src="${it.img}" class="w-12 h-12 rounded-xl object-cover">
+                <div><p class="font-bold text-sm">${it.name}</p><div class="flex items-center gap-3 mt-1"><button onclick="changeQty(${i}, -1)" class="w-6 h-6 bg-slate-700 rounded-lg text-white">-</button><span class="font-bold text-blue-400">${it.qty}</span><button onclick="changeQty(${i}, 1)" class="w-6 h-6 bg-slate-700 rounded-lg text-white">+</button></div></div></div>
+                <p class="font-black text-blue-500">$${it.price * it.qty}</p></div>`).join('');
+            document.getElementById('cartTotal').innerText = `$${cart.reduce((s, i) => s + (Number(i.price) * i.qty), 0)}`;
+        }
+
+        function changeQty(idx, d) { cart[idx].qty += d; if(cart[idx].qty <= 0) cart.splice(idx, 1); updateCart(); }
+        function toggleCart() { document.getElementById('cartSidebar').classList.toggle('translate-x-full'); }
+        function openCheckout() { if(cart.length > 0) document.getElementById('checkoutModal').style.display = 'flex'; }
+        function closeCheckout() { document.getElementById('checkoutModal').style.display = 'none'; }
+
+        // WHATSAPP
+        function finalizeOrder(e) {
+            e.preventDefault();
+            const name = document.getElementById('custName').value, phone = document.getElementById('custPhone').value, pay = document.getElementById('payMethod').value, total = document.getElementById('cartTotal').innerText;
+            let itemsTxt = cart.map(i => `• ${i.name} (x${i.qty}) - $${i.price * i.qty}`).join('%0A');
+            const myNum = "218915124644";
+            const msg = `${dict[lang].waPrefix}%0A------------------%0A👤 *Name:* ${name}%0A📞 *Phone:* ${phone}%0A💳 *Payment:* ${pay}%0A------------------%0A📦 *Items:*%0A${itemsTxt}%0A------------------%0A💰 *Total:* ${total}`;
+            window.open(`https://wa.me/${myNum}?text=${msg}`, '_blank');
+            cart = []; updateCart(); closeCheckout();
+        }
+
+        function save() { localStorage.setItem('AD_PRO_V18', JSON.stringify(appData)); }
+        function delCat(i) { if(confirm("Delete Category?")) { appData.categories.splice(i,1); save(); renderStore(); } }
+        function delProd(id) { appData.products = appData.products.filter(p => p.id !== id); save(); renderStore(); }
+
+        applyAll();
+    </script>
+</body>
+</html>
