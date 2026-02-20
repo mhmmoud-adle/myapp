@@ -8,217 +8,140 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --border: rgba(255,255,255,0.1); }
-        .light { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --border: rgba(0,0,0,0.1); }
-        body { background: var(--bg); color: var(--text); transition: 0.3s; font-family: system-ui, sans-serif; overflow-x: hidden; }
-        .glass { background: var(--card); border: 1px solid var(--border); backdrop-filter: blur(10px); }
-        #adminPanel, #checkoutModal, #loginModal { display: none; }
-        [dir="rtl"] { text-align: right; }
-        input, select { font-size: 16px !important; color: #fff !important; background: rgba(0,0,0,0.2) !important; border: 1px solid rgba(255,255,255,0.1) !important; }
-        .light input, .light select { color: #000 !important; background: rgba(0,0,0,0.05) !important; border: 1px solid rgba(0,0,0,0.1) !important; }
-        #cartSidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; margin: 0; padding: 0; }
+        .glass { background: var(--card); border: 1px solid var(--border); }
+        #adminPanel, #loginModal { display: none; }
+        input, select { background: rgba(0,0,0,0.5) !important; color: white !important; border: 1px solid #334155 !important; padding: 12px; border-radius: 8px; }
+        .btn-blue { background: #2563eb; color: white; font-weight: bold; padding: 12px; border-radius: 8px; }
     </style>
 </head>
-<body class="min-h-screen pb-10">
+<body>
 
-    <nav class="glass sticky top-0 z-[60] p-3 md:p-4 shadow-xl">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl md:text-2xl font-black text-blue-500 tracking-tighter" id="mainLogo">الخط الرفيع</h1>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" class="p-2 text-lg"><i class="fa-solid fa-circle-half-stroke"></i></button>
-                <button onclick="toggleLang()" id="langBtn" class="font-bold border border-blue-500 px-3 py-1 rounded-lg text-xs">English</button>
-                <div class="relative cursor-pointer p-2" onclick="toggleCart()">
-                    <i class="fa-solid fa-cart-shopping text-xl text-blue-500"></i>
-                    <span id="cartCount" class="absolute top-0 right-0 bg-red-600 text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-black text-white">0</span>
-                </div>
-                <button onclick="openLogin()" class="opacity-20 p-2"><i class="fa-solid fa-user-shield"></i></button>
-            </div>
-        </div>
+    <nav class="glass p-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-blue-500">الخط الرفيع</h1>
+        <button onclick="document.getElementById('loginModal').style.display='flex'" class="opacity-20"><i class="fa-solid fa-user-shield"></i></button>
     </nav>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-6">
-        <div class="mb-6 md:mb-10 flex justify-center">
-            <div class="relative w-full max-w-xl">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none"></i>
-                <input type="text" id="searchInput" onkeyup="renderStore()" class="w-full p-4 pl-12 rounded-2xl outline-none focus:border-blue-500" placeholder="بحث...">
-            </div>
+    <div id="loginModal" class="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4">
+        <div class="glass p-6 rounded-xl w-full max-w-sm">
+            <input type="password" id="adminPass" class="w-full mb-4 text-center" placeholder="Password">
+            <button onclick="login()" class="btn-blue w-full">Login</button>
         </div>
+    </div>
 
-        <div id="loginModal" class="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4">
-            <div class="glass w-full max-w-sm p-8 rounded-[2rem] border border-blue-500/30">
-                <h2 class="text-xl font-black mb-6 text-center text-blue-500">دخول المشرف</h2>
-                <input type="password" id="adminPassInput" class="w-full p-4 mb-4 rounded-xl text-center" placeholder="Password">
-                <button onclick="handleLogin()" class="w-full bg-blue-600 p-4 rounded-xl font-black mb-2">دخول</button>
-                <button onclick="closeLogin()" class="w-full text-xs opacity-50">إلغاء</button>
-            </div>
-        </div>
-
-        <div id="adminPanel" class="glass rounded-[1.5rem] p-5 md:p-8 mb-10 border border-blue-500/30">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="font-black text-blue-400">لوحة التحكم</h2>
-                <button onclick="location.reload()" class="bg-red-500 text-white px-4 py-1 rounded-lg text-[10px] font-bold">خروج</button>
-            </div>
-            <div class="grid lg:grid-cols-2 gap-8">
-                <div class="space-y-4">
-                    <p class="text-[10px] font-black opacity-40 uppercase">1. الأقسام</p>
-                    <div class="flex gap-2">
-                        <input type="text" id="catInput" class="flex-grow p-3 rounded-xl outline-none">
-                        <button onclick="addCategory()" class="bg-blue-600 px-5 rounded-xl font-black text-xs">إضافة</button>
-                    </div>
+    <main class="p-4 max-w-4xl mx-auto">
+        <div id="adminPanel" class="glass p-6 rounded-xl mb-10 border-blue-500/50">
+            <h2 class="mb-4 font-bold">Admin Panel</h2>
+            <div class="space-y-6">
+                <div class="flex gap-2">
+                    <input type="text" id="newCat" class="flex-grow" placeholder="New Category">
+                    <button onclick="addCat()" class="btn-blue">Add</button>
                 </div>
-                <div class="space-y-4">
-                    <p class="text-[10px] font-black opacity-40 uppercase">2. المنتجات</p>
-                    <select id="catSelect" class="w-full p-3 rounded-xl"></select>
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="pName" placeholder="الاسم" class="p-3 rounded-xl">
-                        <input type="number" id="pPrice" placeholder="السعر" class="p-3 rounded-xl">
-                    </div>
-                    <input type="file" id="pImg" accept="image/*" class="w-full text-[10px]">
-                    <button onclick="saveProduct()" class="w-full bg-green-600 p-4 rounded-xl font-black text-sm uppercase">نشر المنتج</button>
+                <div class="border-t border-white/10 pt-4">
+                    <select id="catSelect" class="w-full mb-2"></select>
+                    <input type="text" id="pName" placeholder="Product Name" class="w-full mb-2">
+                    <input type="number" id="pPrice" placeholder="Price" class="w-full mb-2">
+                    <input type="file" id="pImg" class="w-full text-xs mb-4">
+                    <button onclick="addProd()" class="btn-blue w-full bg-green-600">Publish</button>
                 </div>
             </div>
         </div>
 
-        <div id="storeContainer" class="space-y-16"></div>
+        <div id="store" class="space-y-10"></div>
     </main>
-
-    <div id="checkoutModal" class="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4">
-        <div class="glass w-full max-w-lg p-6 rounded-[2.5rem]">
-            <h2 id="t-checkoutHeader" class="text-2xl font-black mb-6 text-blue-500 italic">بيانات الطلب</h2>
-            <form onsubmit="finalizeOrder(event)" class="space-y-4">
-                <input type="text" id="custName" required class="w-full p-4 rounded-xl outline-none" placeholder="الاسم">
-                <input type="tel" id="custPhone" required class="w-full p-4 rounded-xl outline-none" placeholder="الهاتف">
-                <select id="payMethod" class="w-full p-4 rounded-xl">
-                    <option value="Cash" id="t-optCash">كاش</option>
-                    <option value="Bank" id="t-optBank">تحويل</option>
-                </select>
-                <button type="submit" id="t-confirmBtn" class="w-full bg-blue-600 p-5 rounded-xl font-black text-xl">تأكيد وإرسال</button>
-                <button type="button" onclick="closeCheckout()" class="w-full text-xs opacity-50 underline">رجوع</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="cartSidebar" class="fixed right-0 top-0 h-full w-full md:w-[450px] glass z-[80] p-6 flex flex-col translate-x-full shadow-2xl">
-        <div class="flex justify-between items-center mb-8"><h2 class="font-black text-3xl text-blue-500">السلة</h2><button onclick="toggleCart()" class="text-4xl">&times;</button></div>
-        <div id="cartItems" class="flex-grow space-y-4 overflow-y-auto"></div>
-        <div class="pt-6 border-t border-white/10 mt-4">
-            <div class="flex justify-between mb-8 font-black text-3xl"><span>المجموع</span><span id="cartTotal" class="text-blue-500">$0</span></div>
-            <button onclick="openCheckout()" class="w-full bg-blue-600 p-5 rounded-2xl font-black text-xl">اطلب الآن</button>
-        </div>
-    </div>
 
     <script>
         const API = "https://fine-line-9c84d-default-rtdb.firebaseio.com/storeData";
-        window.appData = { categories: {}, products: {} };
-        window.cart = [];
-        window.lang = localStorage.getItem('AD_LANG') || 'ar';
-        window.theme = localStorage.getItem('AD_THEME') || 'dark';
+        let categories = [];
+        let products = {};
 
-        async function loadStore() {
+        async function sync() {
             try {
                 const res = await fetch(`${API}.json`);
                 const data = await res.json();
-                if(data) {
-                    window.appData.categories = data.categories || {};
-                    window.appData.products = data.products || {};
-                }
-                applyAll();
-            } catch (e) { console.error("Load Error:", e); }
+                
+                // Fixed: Handling empty database safely
+                categories = data && data.categories ? Object.values(data.categories) : [];
+                products = data && data.products ? data.products : {};
+                
+                render();
+            } catch (e) {
+                console.error("Sync Error", e);
+            }
         }
 
-        async function addCategory() {
-            const name = document.getElementById('catInput').value.trim();
-            if(!name) return;
-            await fetch(`${API}/categories.json`, { method: 'POST', body: JSON.stringify(name) });
-            document.getElementById('catInput').value = '';
-            loadStore();
+        async function addCat() {
+            const val = document.getElementById('newCat').value.trim();
+            if(!val) return;
+            await fetch(`${API}/categories.json`, { method: 'POST', body: JSON.stringify(val) });
+            document.getElementById('newCat').value = '';
+            sync();
         }
 
-        async function saveProduct() {
-            const n = document.getElementById('pName').value, p = document.getElementById('pPrice').value, 
-                  c = document.getElementById('catSelect').value, f = document.getElementById('pImg').files[0];
-            if(!n || !p || !c) return alert("Missing data");
-            
-            let img = "https://via.placeholder.com/400";
-            if(f) {
+        async function addProd() {
+            const name = document.getElementById('pName').value;
+            const price = document.getElementById('pPrice').value;
+            const cat = document.getElementById('catSelect').value;
+            const file = document.getElementById('pImg').files[0];
+
+            if(!name || !price || !cat) return alert("Fill all fields");
+
+            let img = "https://via.placeholder.com/150";
+            if(file) {
                 const reader = new FileReader();
-                img = await new Promise(res => { reader.onload = e => res(e.target.result); reader.readAsDataURL(f); });
+                img = await new Promise(r => { reader.onload = e => r(e.target.result); reader.readAsDataURL(file); });
             }
 
-            await fetch(`${API}/products.json`, { 
-                method: 'POST', 
-                body: JSON.stringify({ name: n, price: p, category: c, img }) 
+            await fetch(`${API}/products.json`, {
+                method: 'POST',
+                body: JSON.stringify({ name, price, category: cat, img })
             });
-            document.getElementById('pName').value = '';
-            document.getElementById('pPrice').value = '';
-            loadStore();
+            sync();
         }
 
-        function renderStore() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
+        function render() {
             const isAdmin = document.getElementById('adminPanel').style.display === 'block';
-            const catArr = Object.values(window.appData.categories);
-            const prodArr = Object.entries(window.appData.products);
-
-            document.getElementById('catSelect').innerHTML = catArr.map(c => `<option value="${c}">${c}</option>`).join('');
             
-            document.getElementById('storeContainer').innerHTML = catArr.map(cat => {
-                const ps = prodArr.filter(([id, p]) => p.category === cat && p.name.toLowerCase().includes(q));
-                if(ps.length === 0) return "";
-                return `<section><h2 class="text-xl font-black mb-6 border-l-4 border-blue-600 pl-3 uppercase">${cat}</h2>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">${ps.map(([id, p]) => `
-                        <div class="glass p-3 rounded-[1.8rem] relative">
-                            <img src="${p.img}" class="w-full aspect-square object-cover rounded-[1.4rem] mb-4">
-                            <h4 class="font-bold text-xs truncate">${p.name}</h4>
-                            <p class="text-blue-500 font-black text-xl mb-4">$${p.price}</p>
-                            <button onclick="addToCart('${id}')" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl text-[10px] uppercase">طلب</button>
-                            ${isAdmin ? `<button onclick="delProd('${id}')" class="absolute top-4 right-4 bg-red-600 text-white w-7 h-7 rounded-full">×</button>` : ''}
-                        </div>`).join('')}</div></section>`;
+            // Fill Dropdown
+            document.getElementById('catSelect').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            // Fill Store
+            const storeHTML = categories.map(cat => {
+                const ps = Object.entries(products).filter(([id, p]) => p.category === cat);
+                return `
+                    <section>
+                        <h2 class="text-blue-500 font-bold mb-4 border-l-4 border-blue-500 pl-2">${cat}</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            ${ps.map(([id, p]) => `
+                                <div class="glass p-3 rounded-xl relative">
+                                    <img src="${p.img}" class="w-full aspect-square object-cover rounded-lg mb-2">
+                                    <div class="text-sm font-bold">${p.name}</div>
+                                    <div class="text-blue-400">$${p.price}</div>
+                                    ${isAdmin ? `<button onclick="delProd('${id}')" class="absolute top-2 right-2 bg-red-600 w-6 h-6 rounded-full">×</button>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+                `;
             }).join('');
+            
+            document.getElementById('store').innerHTML = storeHTML || '<p class="opacity-30 text-center">No data yet.</p>';
         }
 
-        window.addToCart = (id) => {
-            const p = window.appData.products[id];
-            const ex = window.cart.find(i => i.id === id);
-            if(ex) ex.qty++; else window.cart.push({...p, id, qty: 1});
-            updateCart();
-            if(window.innerWidth > 768) toggleCart();
-        };
-
-        window.updateCart = () => {
-            document.getElementById('cartCount').innerText = window.cart.reduce((s, i) => s + i.qty, 0);
-            document.getElementById('cartItems').innerHTML = window.cart.map((it, i) => `
-                <div class="flex justify-between items-center bg-black/20 p-4 rounded-2xl">
-                    <div class="flex items-center gap-4">
-                        <img src="${it.img}" class="w-12 h-12 rounded-xl object-cover">
-                        <div><p class="font-bold text-xs">${it.name}</p><p class="text-blue-400 text-sm">x${it.qty}</p></div>
-                    </div>
-                    <p class="font-black text-blue-500">$${it.price * it.qty}</p>
-                </div>`).join('');
-            document.getElementById('cartTotal').innerText = `$${window.cart.reduce((s, i) => s + (i.price * i.qty), 0)}`;
-        };
-
-        async function delProd(id) { if(confirm("حذف؟")) { await fetch(`${API}/products/${id}.json`, { method: 'DELETE' }); loadStore(); } }
-        window.toggleTheme = () => { window.theme = window.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('AD_THEME', window.theme); applyAll(); };
-        window.toggleLang = () => { window.lang = window.lang === 'en' ? 'ar' : 'en'; localStorage.setItem('AD_LANG', window.lang); applyAll(); };
-        window.openLogin = () => { document.getElementById('loginModal').style.display = 'flex'; };
-        window.closeLogin = () => { document.getElementById('loginModal').style.display = 'none'; };
-        window.handleLogin = () => { if(document.getElementById('adminPassInput').value === '1234') { document.getElementById('adminPanel').style.display = 'block'; closeLogin(); renderStore(); } };
-        window.toggleCart = () => { document.getElementById('cartSidebar').classList.toggle('translate-x-full'); };
-        window.openCheckout = () => { if(window.cart.length > 0) document.getElementById('checkoutModal').style.display = 'flex'; };
-        window.closeCheckout = () => { document.getElementById('checkoutModal').style.display = 'none'; };
-        window.finalizeOrder = (e) => {
-            e.preventDefault();
-            const msg = `طلب جديد:%0Aالاسم: ${document.getElementById('custName').value}%0Aالمنتجات: ${window.cart.map(i => i.name).join(', ')}`;
-            window.open(`https://wa.me/218915124644?text=${msg}`, '_blank');
-        };
-
-        function applyAll() {
-            document.getElementById('htmlTag').dir = window.lang === 'ar' ? 'rtl' : 'ltr';
-            document.body.className = window.theme === 'light' ? 'light min-h-screen pb-10' : 'min-h-screen pb-10';
-            renderStore();
+        async function delProd(id) {
+            await fetch(`${API}/products/${id}.json`, { method: 'DELETE' });
+            sync();
         }
 
-        loadStore();
+        function login() {
+            if(document.getElementById('adminPass').value === '1234') {
+                document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('loginModal').style.display = 'none';
+                render();
+            }
+        }
+
+        sync();
     </script>
 </body>
 </html>
